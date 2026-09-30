@@ -299,6 +299,10 @@
   cursor: pointer;
 }
 
+.frt-chat button.frt-chat__send:not(:disabled) {
+  color: var(--white);
+}
+
 .frt-chat__send:disabled {
   background: var(--blue-soft);
   color: var(--text-muted);
