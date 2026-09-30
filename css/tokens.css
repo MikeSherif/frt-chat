@@ -1,0 +1,19 @@
+/*
+ * Палитра ФРТ. Переменные висят на виджете, чтобы не протекать в страницу.
+ */
+
+.frt-chat {
+  --blue: #214091;
+  --blue-light: #3a5cb8;
+  --blue-glow: #6d86d6;
+  --blue-soft: #e7edfb;
+  --orange: #f58220;
+  --bg: #eef2fb;
+  --white: #ffffff;
+  --text: #1a2540;
+  --text-muted: #5a6a8a;
+  --line: rgba(33, 64, 145, 0.14);
+  --shadow: 0 18px 50px rgba(33, 64, 145, 0.18);
+  --radius: 24px;
+  --font: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
+}
