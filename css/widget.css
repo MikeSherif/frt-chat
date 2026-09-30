@@ -169,15 +169,62 @@
 }
 
 .frt-chat__row--bot {
-  align-self: flex-start;
-  align-items: flex-start;
+  align-self: stretch;
+  align-items: stretch;
+  width: 100%;
+  max-width: none;
 }
 
 .frt-chat__bubble {
   margin: 0;
   padding: 10px 12px;
+  overflow-wrap: break-word;
+}
+
+.frt-chat__row--user .frt-chat__bubble,
+.frt-chat__text {
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  text-align: justify;
+}
+
+.frt-chat__text {
+  margin: 0;
+  min-width: 0;
+}
+
+.frt-chat__row--bot .frt-chat__bubble {
+  display: flow-root;
+}
+
+.frt-chat__bubble-actor {
+  float: left;
+  width: 0;
+  height: 0;
+  margin: 0;
+  opacity: 0;
+  object-fit: contain;
+  pointer-events: none;
+  transform-origin: center bottom;
+  transition:
+    width 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    margin 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.4s ease;
+}
+
+.frt-chat__row--host .frt-chat__bubble-actor {
+  width: 34px;
+  height: 34px;
+  margin: 1px 8px 2px 0;
+  opacity: 1;
+}
+
+.frt-chat__bubble-actor--hop {
+  animation: frt-chat-hop 0.7s ease;
+}
+
+.frt-chat__bubble-actor--flip {
+  animation: frt-chat-flip 0.75s ease;
 }
 
 .frt-chat__row--user .frt-chat__bubble {
@@ -392,6 +439,20 @@
   }
 }
 
+@keyframes frt-chat-hop {
+  0%,
+  100% { transform: translateY(0); }
+  32% { transform: translateY(-9px); }
+  52% { transform: translateY(0); }
+  70% { transform: translateY(-4px); }
+  86% { transform: translateY(0); }
+}
+
+@keyframes frt-chat-flip {
+  from { transform: rotateY(0); }
+  to { transform: rotateY(360deg); }
+}
+
 @keyframes frt-chat-dot {
   0%,
   80%,
@@ -419,7 +480,8 @@
   .frt-chat__typing span,
   .frt-chat__core,
   .frt-chat__option,
-  .frt-chat__send {
+  .frt-chat__send,
+  .frt-chat__bubble-actor {
     animation: none;
     transition: none;
   }

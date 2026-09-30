@@ -27,15 +27,41 @@ function icon(name) {
   return svg;
 }
 
+const MASCOT_MOVE_MS = 15000;
+const MASCOT_MOVES = ['hop', 'flip'];
+let mascotMoveCursor = 0;
+
+function renderBubble(message) {
+  if (message.role !== 'bot') {
+    const bubble = document.createElement('p');
+    bubble.className = 'frt-chat__bubble';
+    bubble.textContent = message.text;
+    return bubble;
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'frt-chat__bubble';
+
+  const text = document.createElement('p');
+  text.className = 'frt-chat__text';
+
+  const actor = document.createElement('img');
+  actor.className = 'frt-chat__bubble-actor';
+  actor.src = MASCOT_URL;
+  actor.alt = '';
+  actor.draggable = false;
+  actor.setAttribute('aria-hidden', 'true');
+
+  text.append(actor, document.createTextNode(message.text));
+  bubble.append(text);
+  return bubble;
+}
+
 function renderMessage(message) {
   const row = document.createElement('div');
   row.className = `frt-chat__row frt-chat__row--${message.role}`;
   row.dataset.id = message.id;
-
-  const bubble = document.createElement('p');
-  bubble.className = 'frt-chat__bubble';
-  bubble.textContent = message.text;
-  row.append(bubble);
+  row.append(renderBubble(message));
 
   if (!message.options?.length) return row;
 
@@ -98,7 +124,21 @@ function syncLog(log, state) {
     typing.remove();
   }
 
+  const last = state.messages.at(-1);
+  const hostId = last?.role === 'bot' ? last.id : null;
+  log.querySelectorAll('.frt-chat__row--bot').forEach((row) => {
+    const isHost = row.dataset.id === hostId;
+    if (!isHost) {
+      row.classList.remove('frt-chat__row--host');
+      return;
+    }
+    if (!row.classList.contains('frt-chat__row--host')) {
+      requestAnimationFrame(() => row.classList.add('frt-chat__row--host'));
+    }
+  });
+
   log.scrollTop = log.scrollHeight;
+  return hostId;
 }
 
 function buildShell() {
@@ -211,10 +251,38 @@ function fitInput(input) {
   input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
 }
 
+function playMascotMove(log) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const actor = log.querySelector('.frt-chat__row--host .frt-chat__bubble-actor');
+  if (!actor) return;
+
+  const move = MASCOT_MOVES[mascotMoveCursor % MASCOT_MOVES.length];
+  mascotMoveCursor += 1;
+  actor.classList.remove('frt-chat__bubble-actor--hop', 'frt-chat__bubble-actor--flip');
+  void actor.offsetWidth;
+  actor.classList.add(move === 'hop' ? 'frt-chat__bubble-actor--hop' : 'frt-chat__bubble-actor--flip');
+}
+
 export function mountChatWidget(parent, store) {
   const ui = buildShell();
   let wasOpen = false;
   let typing = false;
+  let hostId = null;
+  let moveTimer = 0;
+
+  function syncMotion(state, nextHost) {
+    const hostChanged = nextHost !== hostId;
+    hostId = nextHost;
+    if (!state.open || !hostId) {
+      clearInterval(moveTimer);
+      moveTimer = 0;
+      return;
+    }
+    if (hostChanged || !moveTimer) {
+      clearInterval(moveTimer);
+      moveTimer = setInterval(() => playMascotMove(ui.log), MASCOT_MOVE_MS);
+    }
+  }
 
   function refreshSend() {
     ui.send.disabled = typing || !ui.input.value.trim();
@@ -227,7 +295,7 @@ export function mountChatWidget(parent, store) {
     ui.panel.setAttribute('aria-hidden', state.open ? 'false' : 'true');
     ui.launcher.setAttribute('aria-expanded', state.open ? 'true' : 'false');
     ui.launcher.setAttribute('aria-label', state.open ? 'Закрыть чат' : 'Открыть чат');
-    syncLog(ui.log, state);
+    syncMotion(state, syncLog(ui.log, state));
     refreshSend();
 
     if (state.open && !wasOpen) {
@@ -239,6 +307,11 @@ export function mountChatWidget(parent, store) {
 
   ui.launcher.addEventListener('click', () => store.toggle());
   ui.close.addEventListener('click', () => store.close());
+
+  ui.log.addEventListener('animationend', (event) => {
+    if (!(event.target instanceof Element)) return;
+    event.target.classList.remove('frt-chat__bubble-actor--hop', 'frt-chat__bubble-actor--flip');
+  });
 
   ui.log.addEventListener('click', (event) => {
     const button = event.target.closest('[data-option]');
